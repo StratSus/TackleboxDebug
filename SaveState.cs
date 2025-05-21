@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace TackleboxDbg
 {
@@ -29,6 +30,7 @@ namespace TackleboxDbg
             facingDir = Player._currentFacingDirection,
             health = Player._currentHealth,
             safeMortarIsland = GetMortarIslandMook()._currentState == MortarDesertMook._states.Dead,
+            timeOfDay = FiletRenderPipeline.GetConfig()._currentDayNightConfig._timeOfDay,
 
             SaveData = SaveManager._currentSaveData
         };
@@ -136,12 +138,16 @@ namespace TackleboxDbg
                 Player._currentFacingDirection = data.facingDir;
             }
 
-            if(waitToSetHealth) yield return new WaitUntil(() => Player._currentHealth == 3);
-            if (0 < data.health && data.health < 3) Player.SetCurrentHealth(data.health);
+            if(0 <= data.timeOfDay && data.timeOfDay <= 1)
+                FiletRenderPipeline.GetConfig()._currentDayNightConfig._timeOfDay = data.timeOfDay;
 
             MortarDesertMook mook = GetMortarIslandMook();
             if(data.safeMortarIsland) mook.Kill(Vector3.zero);
             else mook._headAgent.Respawn();
+
+            if(waitToSetHealth) yield return new WaitUntil(() => Player._currentHealth == 3);
+            if (0 < data.health && data.health < 3) Player.SetCurrentHealth(data.health);
+
         }
     }
 
@@ -153,6 +159,7 @@ namespace TackleboxDbg
         public Vector3 facingDir;
         public int health;
         public bool safeMortarIsland;
+        public float timeOfDay = -1;
 
         [SerializeField]
         private string SaveDataString;
